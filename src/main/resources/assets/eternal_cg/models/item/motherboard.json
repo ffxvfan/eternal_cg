@@ -1,0 +1,6 @@
+{
+  "parent": "eternal_cg:item/card",
+  "textures": {
+    "1": "eternal_cg:items/motherboard"
+  }
+}

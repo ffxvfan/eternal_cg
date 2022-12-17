@@ -1,0 +1,43 @@
+{
+	"texture_size": [64, 64],
+	"textures": {
+		"0": "eternal_cg:items/back"
+	},
+	"elements": [
+		{
+			"from": [0, 0, 7],
+			"to": [16, 24, 8],
+			"faces": {
+				"north": {"uv": [0, 0, 16, 16], "texture": "#0"},
+				"south": {"uv": [0, 0, 16, 16], "texture": "#1"}
+			}
+		}
+	],
+	"display": {
+		"thirdperson_righthand": {
+			"translation": [0, 1, 1],
+			"scale": [0.4, 0.4, 0.4]
+		},
+		"thirdperson_lefthand": {
+			"translation": [0, 1, 1],
+			"scale": [0.4, 0.4, 0.4]
+		},
+		"firstperson_righthand": {
+			"rotation": [0, -33, 6],
+			"translation": [-0.75, 2.5, 0],
+			"scale": [0.5, 0.5, 0.5]
+		},
+		"ground": {
+			"translation": [0, 3.25, 0],
+			"scale": [0.7, 0.7, 0.7]
+		},
+		"gui": {
+			"translation": [0, -2.5, 0],
+			"scale": [0.6, 0.6, 0.6]
+		},
+		"fixed": {
+			"rotation": [0, 180, 0],
+			"translation": [0, -3.75, 0]
+		}
+	}
+}

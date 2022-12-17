@@ -1,0 +1,25 @@
+modLoader="javafml"
+loaderVersion="[36,)"
+license="All rights reserved"
+[[mods]]
+modId="eternal_cg"
+version="${file.jarVersion}"
+displayName="Eternal TCG"
+logoFile=""
+credits="The eternal smp goober group"
+authors="tba"
+description='''
+The ETERNAL SMP's Trading Card Game
+'''
+[[dependencies.eternal_cg]]
+    modId="forge"
+    mandatory=true
+    versionRange="[36,)"
+    ordering="NONE"
+    side="BOTH"
+[[dependencies.eternal_cg]]
+    modId="minecraft"
+    mandatory=true
+    versionRange="[1.16.5,1.17)"
+    ordering="NONE"
+    side="BOTH"
