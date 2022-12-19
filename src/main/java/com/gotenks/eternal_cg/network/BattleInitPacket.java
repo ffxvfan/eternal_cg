@@ -2,9 +2,11 @@ package com.gotenks.eternal_cg.network;
 
 import com.gotenks.eternal_cg.battle.BattleManagerFactory;
 import com.gotenks.eternal_cg.items.CardID;
+import com.gotenks.eternal_cg.screen.CardSelectableIcon;
 import net.minecraft.network.PacketBuffer;
 import net.minecraftforge.fml.network.NetworkEvent;
 
+import java.util.ArrayList;
 import java.util.function.Supplier;
 
 public class BattleInitPacket {

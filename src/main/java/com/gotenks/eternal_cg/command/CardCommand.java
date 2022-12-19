@@ -14,7 +14,7 @@ public class CardCommand {
                     .then(Commands.argument("player", EntityArgument.player())
                     .executes(ctx -> {
                         ServerPlayerEntity sender = ctx.getSource().getPlayerOrException();
-                        ServerPlayerEntity receiver = ctx.getArgument("player", ServerPlayerEntity.class);
+                        ServerPlayerEntity receiver = EntityArgument.getPlayer(ctx, "player");
 
                         PendingBattleManager.add(sender, receiver);
                         return 1;

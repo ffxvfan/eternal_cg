@@ -29,36 +29,12 @@ public class BattleStatePacket {
     }
 
     public static void handle(BattleStatePacket message, Supplier<NetworkEvent.Context> ctx) {
-        DistExecutor.safeRunWhenOn(Dist.CLIENT, (DistExecutor.SafeSupplier<SafeRunnable>) () -> handleClient(message, ctx));
-        DistExecutor.safeRunWhenOn(Dist.DEDICATED_SERVER, (DistExecutor.SafeSupplier<SafeRunnable>) () -> handleServer(message, ctx));
+        DistExecutor.safeRunWhenOn(Dist.CLIENT, (DistExecutor.SafeSupplier<SafeRunnable>) () -> new SafeRunnable() {
+            @Override
+            public void run() {
+                Minecraft.getInstance().setScreen(new CardScreen(Minecraft.getInstance().player.inventory));
+            }
+        });
         ctx.get().setPacketHandled(true);
-    }
-
-    private static SafeRunnable handleServer(BattleStatePacket message, Supplier<NetworkEvent.Context> ctx) {
-        return new SafeRunnable() {
-            @Override
-            public void run() {
-                ctx.get().enqueueWork(() -> {
-
-                });
-            }
-        };
-    }
-
-    private static SafeRunnable handleClient(BattleStatePacket message, Supplier<NetworkEvent.Context> ctx) {
-        return new SafeRunnable() {
-            @Override
-            public void run() {
-                ctx.get().enqueueWork(() -> {
-                    switch(message.state) {
-                        case SELECTING:
-                            Minecraft.getInstance().setScreen(new CardScreen(Minecraft.getInstance().player.inventory));
-                            break;
-                        default:
-                            break;
-                    }
-                });
-            }
-        };
     }
 }

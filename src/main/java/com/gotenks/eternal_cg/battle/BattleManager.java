@@ -25,9 +25,10 @@ public class BattleManager {
     }
 
     public void start() {
-        System.out.println("HOLY SHIT YOU GOT THIS FAR");
+
 
     }
+
 
     public void endBattle() {
         //BattleManagerFactory.removeBattle(this);
