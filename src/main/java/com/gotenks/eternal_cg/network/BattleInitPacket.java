@@ -1,36 +1,41 @@
 package com.gotenks.eternal_cg.network;
 
 import com.gotenks.eternal_cg.battle.BattleManagerFactory;
+import com.gotenks.eternal_cg.battle.BattlePlayer;
 import com.gotenks.eternal_cg.items.CardID;
-import com.gotenks.eternal_cg.screen.CardSelectableIcon;
 import net.minecraft.network.PacketBuffer;
 import net.minecraftforge.fml.network.NetworkEvent;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.function.Supplier;
 
 public class BattleInitPacket {
+    public BattlePlayer player;
 
-    public CardID[] cardIDS;
-
-    public BattleInitPacket(CardID[] cardIDS) {
-        this.cardIDS = cardIDS;
+    public BattleInitPacket(int entityID, ArrayList<CardID> cards) {
+        player = new BattlePlayer(entityID, cards);
     }
 
     public static void encode(BattleInitPacket message, PacketBuffer buffer) {
-        buffer.writeEnum(message.cardIDS[0]);
-        buffer.writeEnum(message.cardIDS[1]);
-        buffer.writeEnum(message.cardIDS[2]);
+        for(CardID card : message.player.cards) {
+            buffer.writeEnum(card);
+        }
+        buffer.writeInt(message.player.entityID);
     }
 
     public static BattleInitPacket decode(PacketBuffer buffer) {
-        return new BattleInitPacket(new CardID[]{buffer.readEnum(CardID.class), buffer.readEnum(CardID.class), buffer.readEnum(CardID.class)});
+        ArrayList<CardID> cards = new ArrayList<>(Arrays.asList(
+                buffer.readEnum(CardID.class),
+                buffer.readEnum(CardID.class),
+                buffer.readEnum(CardID.class)
+        ));
+        int entityID = buffer.readInt();
+        return new BattleInitPacket(entityID, cards);
     }
 
     public static void handle(BattleInitPacket message, Supplier<NetworkEvent.Context> ctx) {
-        ctx.get().enqueueWork(() -> {
-            BattleManagerFactory.init(message.cardIDS);
-        });
+        ctx.get().enqueueWork(() -> BattleManagerFactory.init(message.player));
         ctx.get().setPacketHandled(true);
     }
 }

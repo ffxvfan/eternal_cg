@@ -15,7 +15,7 @@ public class CardPacketHandler {
     );
 
     public static void init() {
-        INSTANCE.registerMessage(0, BattleStatePacket.class, BattleStatePacket::encode, BattleStatePacket::decode, BattleStatePacket::handle);
+        INSTANCE.registerMessage(0, ShowCardSelectionScreenPacket.class, ShowCardSelectionScreenPacket::encode, ShowCardSelectionScreenPacket::decode, ShowCardSelectionScreenPacket::handle);
         INSTANCE.registerMessage(1, BattleInitPacket.class, BattleInitPacket::encode, BattleInitPacket::decode, BattleInitPacket::handle);
     }
 

@@ -6,8 +6,16 @@ import net.minecraft.command.CommandSource;
 import net.minecraft.command.Commands;
 import net.minecraft.command.arguments.EntityArgument;
 import net.minecraft.entity.player.ServerPlayerEntity;
+import net.minecraft.util.text.IFormattableTextComponent;
+import net.minecraft.util.text.StringTextComponent;
+import net.minecraft.util.text.TextFormatting;
 
 public class CardCommand {
+
+    public static IFormattableTextComponent output(String s) {
+        return new StringTextComponent(s).withStyle(TextFormatting.ITALIC, TextFormatting.GRAY);
+    }
+
     public static LiteralArgumentBuilder<CommandSource> register() {
         return Commands.literal("eternalcg")
                 .then(Commands.literal("battle")
@@ -16,27 +24,50 @@ public class CardCommand {
                         ServerPlayerEntity sender = ctx.getSource().getPlayerOrException();
                         ServerPlayerEntity receiver = EntityArgument.getPlayer(ctx, "player");
 
-                        PendingBattleManager.add(sender, receiver);
+                        if(PendingBattleManager.add(sender, receiver)) {
+                            sender.sendMessage(output(receiver.getScoreboardName() + " has received your battle request!"), sender.getUUID());
+                            receiver.sendMessage(output(sender.getScoreboardName() + " has sent you a battle request.\nType /eternalcg accept " + sender.getScoreboardName() + " to accept the battle!"), receiver.getUUID());
+                        } else {
+                            sender.sendMessage(output("Could not add battle.\nYou or the request player is currently in a pending battle"), sender.getUUID());
+                        }
                         return 1;
-                    }))
-                    .then(Commands.literal("cancel")
+                    })))
+                .then(Commands.literal("cancel")
+                    .then(Commands.argument("player", EntityArgument.player())
                     .executes(ctx -> {
-                        ServerPlayerEntity player = ctx.getSource().getPlayerOrException();
-                        PendingBattleManager.remove(player);
+                        ServerPlayerEntity sender = ctx.getSource().getPlayerOrException();
+                        ServerPlayerEntity receiver = EntityArgument.getPlayer(ctx, "player");
+
+                        if(PendingBattleManager.remove(sender, receiver)) {
+                            sender.sendMessage(output("Battle request cancelled"), sender.getUUID());
+                            receiver.sendMessage(output(sender.getScoreboardName() + " has cancelled your battle request"), receiver.getUUID());
+                        } else {
+                            sender.sendMessage(output("Could not cancel battle request.\nYou may not have any pending requests"), sender.getUUID());
+                        }
                         return 1;
-                    }))
-                    .then(Commands.literal("accept")
+                    })))
+                .then(Commands.literal("accept")
+                    .then(Commands.argument("player", EntityArgument.player())
                     .executes(ctx -> {
-                        ServerPlayerEntity player = ctx.getSource().getPlayerOrException();
-                        PendingBattleManager.publish(player);
+                        ServerPlayerEntity sender = ctx.getSource().getPlayerOrException();
+                        ServerPlayerEntity receiver = EntityArgument.getPlayer(ctx, "player");
+
+                        if(PendingBattleManager.publish(sender, receiver)) {
+                            sender.sendMessage(output("Accepted battle with " + receiver.getScoreboardName()), sender.getUUID());
+                            receiver.sendMessage(output(sender.getScoreboardName() + " has accepted your battle request!"), receiver.getUUID());
+                        } else {
+                            sender.sendMessage(output("Could not accept battle request.\nYou may not have any pending requests"), sender.getUUID());
+                        }
                         return 1;
-                    }))
-                    .then(Commands.literal("deny")
-                    .executes(ctx -> {
-                        ServerPlayerEntity player = ctx.getSource().getPlayerOrException();
-                        PendingBattleManager.remove(player);
-                        return 1;
-                    }))
-                );
+                    })))
+                .then(Commands.literal("list")
+                .executes(ctx -> {
+                    ServerPlayerEntity player = ctx.getSource().getPlayerOrException();
+                    player.sendMessage(output("Listed are your pending requests:"), player.getUUID());
+                    for(String name : PendingBattleManager.listAllRequests(player)) {
+                        player.sendMessage(output(" - " + name), player.getUUID());
+                    }
+                    return 1;
+                }));
     }
 }

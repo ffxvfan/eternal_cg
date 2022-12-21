@@ -9,23 +9,23 @@ import net.minecraft.client.renderer.WorldVertexBufferUploader;
 import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 import net.minecraft.util.math.vector.Matrix4f;
 
-public class CardSelectableIcon {
-    public CardID cardID;
-    public float x;
-    public float y;
-    public float width;
-    public float height;
-    private float scale = 1.0f;
+public class CardSelectionUtil {
 
-    public CardSelectableIcon(CardID cardID, float x, float y, float width, float height) {
-        this.cardID = cardID;
-        this.x = x;
-        this.y = y;
-        this.width = width;
-        this.height = height;
+    private CardSelectionUtil() {
+
     }
 
-    public void render(Matrix4f matrix4f) {
+    public static int mousePosToIndex(double mouseX, double mouseY, int width, int height, int cols, int max) {
+        int x = (int) (mouseX / width);
+        int y = (int) (mouseY / height);
+        int idx = x + y * cols;
+        if((-1 < x && x < cols) && idx < max) {
+            return idx;
+        }
+        return -1;
+    }
+
+    public static void renderCard(Matrix4f matrix4f, CardID cardID, int x, int y, int width, int height, float scale) {
         Minecraft.getInstance().getTextureManager().bind(cardID.getResourceLocation());
         RenderSystem.pushMatrix();
         RenderSystem.translatef(x, y, 0);
@@ -39,17 +39,5 @@ public class CardSelectableIcon {
         bufferbuilder.end();
         WorldVertexBufferUploader.end(bufferbuilder);
         RenderSystem.popMatrix();
-    }
-
-    public boolean isIn(int a, int b) {
-        return x <= a && a <= x + width && y <= b && b <= y + height;
-    }
-
-    public void setScale(float scale) {
-        this.scale = scale;
-    }
-
-    public void resetScale() {
-        scale = 1.0f;
     }
 }
