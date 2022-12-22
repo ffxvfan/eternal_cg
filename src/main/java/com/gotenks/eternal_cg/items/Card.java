@@ -1,23 +1,22 @@
 package com.gotenks.eternal_cg.items;
 
-import com.gotenks.eternal_cg.cards.CardAction;
-import com.gotenks.eternal_cg.cards.CardPassive;
+import com.gotenks.eternal_cg.actions.CardAction;
+import com.gotenks.eternal_cg.actions.CardPassive;
+import com.gotenks.eternal_cg.screen.CardDisplay;
+import net.minecraft.client.Minecraft;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.Hand;
-import net.minecraft.util.ResourceLocation;
 import net.minecraft.world.World;
-
-import java.util.Optional;
 
 public class Card extends Item {
 
-    public final CardPassive[] cardPassive;
     public int health;
+    public String name = "";
+    public final CardPassive[] cardPassive;
     public CardAction[] cardActions;
-    private boolean selected = false;
 
     public Card(Properties properties, int health, CardAction[] cardActions, CardPassive[] cardPassives) {
         super(properties);
@@ -29,8 +28,9 @@ public class Card extends Item {
     @Override
     public ActionResult<ItemStack> use(World world, PlayerEntity player, Hand hand) {
         ItemStack itemStack = player.getItemInHand(hand);
-        if(world.isClientSide) return ActionResult.pass(itemStack);
-        selected = !selected;
+        if(world.isClientSide) {
+            Minecraft.getInstance().setScreen(new CardDisplay(CardID.getCardByName(name)));
+        }
 
         return ActionResult.success(itemStack);
     }

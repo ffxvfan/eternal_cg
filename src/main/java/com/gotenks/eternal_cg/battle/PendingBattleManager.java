@@ -1,5 +1,6 @@
 package com.gotenks.eternal_cg.battle;
 
+import com.gotenks.eternal_cg.items.CardID;
 import com.gotenks.eternal_cg.network.CardPacketHandler;
 import com.gotenks.eternal_cg.network.ShowCardSelectionScreenPacket;
 import net.minecraft.entity.player.ServerPlayerEntity;
@@ -35,8 +36,14 @@ public class PendingBattleManager {
         if(pending.containsKey(player1) || !pending.containsValue(player1)) {
             return false;
         }
-        CardPacketHandler.INSTANCE.send(PacketDistributor.PLAYER.with(() -> player1), new ShowCardSelectionScreenPacket());
-        CardPacketHandler.INSTANCE.send(PacketDistributor.PLAYER.with(() -> player2), new ShowCardSelectionScreenPacket());
+
+        ArrayList<CardID> player1Cards = (ArrayList<CardID>) player1.inventory.items.stream().filter(e -> CardID.getCardByName(e.getItem().toString()) != null);
+        CardPacketHandler.INSTANCE.send(PacketDistributor.PLAYER.with(() -> player1), new ShowCardSelectionScreenPacket(player1Cards, 60, 85, 5, 3));
+
+        ArrayList<CardID> player2Cards = (ArrayList<CardID>) player2.inventory.items.stream().filter(e -> CardID.getCardByName(e.getItem().toString()) != null);
+        CardPacketHandler.INSTANCE.send(PacketDistributor.PLAYER.with(() -> player2), new ShowCardSelectionScreenPacket(player2Cards, 60, 85, 5, 3));
+
+        BattleManagerFactory.add(player1.getId(), player2.getId());
         remove(player1, player2);
         return true;
     }

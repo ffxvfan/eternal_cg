@@ -3,17 +3,20 @@ package com.gotenks.eternal_cg.screen;
 import com.gotenks.eternal_cg.items.CardID;
 import com.mojang.blaze3d.systems.RenderSystem;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.FontRenderer;
 import net.minecraft.client.renderer.BufferBuilder;
 import net.minecraft.client.renderer.Tessellator;
 import net.minecraft.client.renderer.WorldVertexBufferUploader;
 import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 import net.minecraft.util.math.vector.Matrix4f;
 
-public class CardSelectionUtil {
+public class CardRenderUtil {
 
-    private CardSelectionUtil() {
+    private CardRenderUtil() {
 
     }
+
+    public static FontRenderer font = Minecraft.getInstance().font;
 
     public static int mousePosToIndex(double mouseX, double mouseY, int width, int height, int cols, int max) {
         int x = (int) (mouseX / width);
