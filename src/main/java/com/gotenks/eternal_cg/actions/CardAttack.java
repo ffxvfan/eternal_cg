@@ -12,15 +12,9 @@ public class CardAttack extends CardAction {
     public Consumer<BattleManager> effect;
 
     public CardAttack(String name, String description, Type type, int baseDamage, Consumer<BattleManager> effect) {
-        super(name, description, type);
-        this.baseDamage = baseDamage;
-        this.effect = effect;
-
-        action = battleManager -> {
+        super(name, description, battleManager -> {
             int damage = new Random().nextInt(baseDamage);
-
-            battleManager.attacker.sendMessage("You selected " + description + "\n?Roll: " + damage);
-
+            battleManager.sendToBoth("Selected " + description + "\n?Roll: " + damage);
             if (damage < 5) {
                 battleManager.sendToBoth("Attack rolled for less than 5... opponent will deal +5atk next turn.");
                 battleManager.addAfterTurn(battleManager1 -> {
@@ -36,6 +30,9 @@ public class CardAttack extends CardAction {
             battleManager.defender.cardIDS.get(0).card.health -= damage;
             battleManager.sendToBoth(battleManager.defender.cardIDS.get(0).name + " HP: " + battleManager.defender.cardIDS.get(0).card.health);
             battleManager.cycle();
-        };
+        });
+        this.baseDamage = baseDamage;
+        this.effect = effect;
+        this.description = name + " (" + type.toString() + ") " + description;
     }
 }

@@ -22,10 +22,10 @@ public class BattleManagerFactory {
         }
     }
 
-    public static void actionSelection(int entityID, int index) {
+    public static void actionSelection(int entityID, CardID cardID, int index) {
         BattleManager battleManager = factory.get(entityID);
         if(battleManager != null) {
-            battleManager.actionSelection(entityID, index);
+            battleManager.actionSelection(entityID, cardID, index);
         }
     }
 }

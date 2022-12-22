@@ -12,15 +12,16 @@ import java.util.function.Consumer;
 
 public class BattleManager {
 
-    private enum State {
+    public enum State {
         INIT,
         START,
-        TURN,
+        REVIVAL,
+        TURN
     }
 
     public BattlePlayer attacker;
     public BattlePlayer defender;
-    private State state;
+    public State state;
     private int turnCount = 0;
 
     public static Consumer<BattleManager> attackerStart;
@@ -66,6 +67,10 @@ public class BattleManager {
                 actionQueue.add(roundBookend);
                 cycle();
                 break;
+            case REVIVAL:
+                cardIDS.get(0).card.resetHealth();
+                state = State.TURN;
+                cycle();
             default:
                 break;
         }
@@ -75,8 +80,8 @@ public class BattleManager {
         actionQueue.remove().accept(this);
     }
 
-    public void actionSelection(int entityID, int index) {
-        if(attacker.entityID != entityID) {
+    public void actionSelection(int entityID, CardID cardID, int index) {
+        if(attacker.entityID != entityID || cardID != attacker.cardIDS.get(0)) {
             return;
         }
 

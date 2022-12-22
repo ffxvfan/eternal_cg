@@ -1,5 +1,6 @@
 package com.gotenks.eternal_cg.screen;
 
+import com.gotenks.eternal_cg.EternalCG;
 import com.gotenks.eternal_cg.items.CardID;
 import com.mojang.blaze3d.systems.RenderSystem;
 import net.minecraft.client.Minecraft;
@@ -26,6 +27,10 @@ public class CardRenderUtil {
             return idx;
         }
         return -1;
+    }
+
+    public static int mousePosToIndex(double mouseX, double mouseY, int offsetX, int offsetY, int width, int height, int cols, int max) {
+        return mousePosToIndex(mouseX - offsetX, mouseY - offsetY, width, height, cols, max);
     }
 
     public static void renderCard(Matrix4f matrix4f, CardID cardID, int x, int y, int width, int height, float scale) {

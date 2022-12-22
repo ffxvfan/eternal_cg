@@ -3,10 +3,15 @@ package com.gotenks.eternal_cg.items;
 import com.gotenks.eternal_cg.EternalCG;
 import com.gotenks.eternal_cg.actions.CardAction;
 import com.gotenks.eternal_cg.actions.CardAttack;
+import com.gotenks.eternal_cg.battle.BattleManager;
+import com.gotenks.eternal_cg.network.CardPacketHandler;
+import com.gotenks.eternal_cg.network.ShowCardSelectionScreenPacket;
 import com.gotenks.eternal_cg.types.Type;
 import net.minecraft.item.Item;
 import net.minecraft.util.ResourceLocation;
+import net.minecraftforge.fml.network.PacketDistributor;
 
+import java.util.ArrayList;
 import java.util.Objects;
 
 import static com.gotenks.eternal_cg.init.ItemsInit.EternalCGTab;
@@ -15,7 +20,7 @@ public enum CardID {
     NEKOMANCER("nekomancer", new Card(new Item.Properties().tab(EternalCGTab), 340, new CardAction[]{
             new CardAttack("Chilled Rush", "56atk", Type.ICE, 56, battleManager -> {}),
             new CardAttack("Vengeance", "27atk, slowly deal +8atk over next two plays.", Type.MOON, 27, battleManager -> {
-                battleManager.attacker.sendMessage("Vengeance effect will be applied on next two rounds");
+                battleManager.attacker.sendMessage("Vengeance effect will be applied on the next two rounds");
                 battleManager.addAfterRound(battleManager1 -> {
                     battleManager1.sendToBoth("Vengeance effect: +8atk");
                     battleManager1.defender.cardIDS.get(0).card.health -= 8;
@@ -25,6 +30,13 @@ public enum CardID {
                         battleManager2.attacker.sendMessage("Vengeance effect has worn off...");
                     });
                 });
+            }),
+            new CardAction("Raise Undead", "Raise one dead card. Can be used once per round.", battleManager -> {
+                battleManager.attacker.sendMessage("Select a card to revive.");
+                CardPacketHandler.INSTANCE.send(
+                        PacketDistributor.PLAYER.with(() -> battleManager.attacker.getServerEntity()),
+                        new ShowCardSelectionScreenPacket((ArrayList<CardID>) battleManager.attacker.cardIDS.stream().filter(cardID -> cardID.card.health < 0), 150, 200, 2, 1));
+                battleManager.state = BattleManager.State.REVIVAL;
             })
     }, null)),
 

@@ -13,6 +13,7 @@ import net.minecraft.world.World;
 
 public class Card extends Item {
 
+    public final int MAX_HEALTH;
     public int health;
     public String name = "";
     public final CardPassive[] cardPassive;
@@ -20,7 +21,7 @@ public class Card extends Item {
 
     public Card(Properties properties, int health, CardAction[] cardActions, CardPassive[] cardPassives) {
         super(properties);
-        this.health = health;
+        this.health = MAX_HEALTH = health;
         this.cardActions = cardActions;
         this.cardPassive = cardPassives;
     }
@@ -33,5 +34,9 @@ public class Card extends Item {
         }
 
         return ActionResult.success(itemStack);
+    }
+
+    public void resetHealth() {
+        health = MAX_HEALTH;
     }
 }

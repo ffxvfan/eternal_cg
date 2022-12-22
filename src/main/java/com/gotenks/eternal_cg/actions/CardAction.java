@@ -9,18 +9,11 @@ public class CardAction {
 
     public String name;
     public String description;
-    public Type type;
     public Consumer<BattleManager> action;
 
-    public CardAction(String name, String description, Type type) {
+    public CardAction(String name, String description, Consumer<BattleManager> action) {
         this.name = name;
-        this.description = name + " (" + type.toString() + ") " + description;
-        this.type = type;
-
-        action = BattleManager::cycle;
+        this.description = description;
+        this.action = action;
     }
-
-
-
-
 }
