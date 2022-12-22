@@ -19,6 +19,7 @@ public class CardPacketHandler {
         INSTANCE.registerMessage(0, ShowCardSelectionScreenPacket.class, ShowCardSelectionScreenPacket::encode, ShowCardSelectionScreenPacket::decode, ShowCardSelectionScreenPacket::handle);
         INSTANCE.registerMessage(1, CardSelectionResponsePacket.class, CardSelectionResponsePacket::encode, CardSelectionResponsePacket::decode, CardSelectionResponsePacket::handle);
         INSTANCE.registerMessage(2, ShowCardDisplayPacket.class, ShowCardDisplayPacket::encode, ShowCardDisplayPacket::decode, ShowCardDisplayPacket::handle);
+        INSTANCE.registerMessage(3, CardDisplayResponsePacket.class, CardDisplayResponsePacket::encode, CardDisplayResponsePacket::decode, CardDisplayResponsePacket::handle);
     }
 
 }
