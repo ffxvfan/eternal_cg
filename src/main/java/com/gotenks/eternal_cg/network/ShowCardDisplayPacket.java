@@ -2,7 +2,6 @@ package com.gotenks.eternal_cg.network;
 
 import com.gotenks.eternal_cg.items.CardID;
 import com.gotenks.eternal_cg.screen.CardDisplay;
-import com.gotenks.eternal_cg.screen.CardSelectionScreen;
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.PacketBuffer;
 import net.minecraftforge.api.distmarker.Dist;
@@ -10,7 +9,6 @@ import net.minecraftforge.fml.DistExecutor;
 import net.minecraftforge.fml.DistExecutor.SafeRunnable;
 import net.minecraftforge.fml.network.NetworkEvent;
 
-import java.util.ArrayList;
 import java.util.function.Supplier;
 
 public class ShowCardDisplayPacket {

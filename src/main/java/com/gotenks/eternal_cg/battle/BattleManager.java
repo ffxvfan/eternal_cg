@@ -2,13 +2,19 @@ package com.gotenks.eternal_cg.battle;
 
 import com.gotenks.eternal_cg.items.CardID;
 import com.gotenks.eternal_cg.network.CardPacketHandler;
-import com.gotenks.eternal_cg.network.ShowCardDisplayPacket;
+import com.gotenks.eternal_cg.network.ShowCardSelectionScreenPacket;
+import net.minecraft.entity.player.ServerPlayerEntity;
+import net.minecraft.util.text.StringTextComponent;
+import net.minecraft.util.text.TextFormatting;
+import net.minecraft.util.text.TranslationTextComponent;
 import net.minecraftforge.fml.network.PacketDistributor;
-import org.lwjgl.system.CallbackI;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.LinkedList;
+import java.util.Optional;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
 public class BattleManager {
 
@@ -16,96 +22,133 @@ public class BattleManager {
         INIT,
         START,
         REVIVAL,
-        TURN
+        TURN,
+        SKIP,
+        SELECT,
     }
 
     public BattlePlayer attacker;
     public BattlePlayer defender;
     public State state;
-    private int turnCount = 0;
-
-    public static Consumer<BattleManager> attackerStart;
-    public static Consumer<BattleManager> attackerEnd;
-    public static final Consumer<BattleManager> turnBookend = battleManager -> battleManager.turnCount++;
-    public static final Consumer<BattleManager> roundBookend = battleManager -> {};
+    public int turnCount = 0;
 
     public LinkedList<Consumer<BattleManager>> actionQueue = new LinkedList<>();
+    public Consumer<BattleManager> turnBookend;
+    public Consumer<BattleManager> roundBookend;
+    public Consumer<BattleManager> attackStart;
+    public Consumer<BattleManager> attackEnd;
+
 
     public BattleManager(BattlePlayer attacker, BattlePlayer defender) {
         this.attacker = attacker;
         this.defender = defender;
-        this.state = State.INIT;
+        this.state = State.SELECT;
 
-        attackerStart = battleManager -> {
-            battleManager.attacker.sendMessage("You're attacking. Select an attack.");
-            CardPacketHandler.INSTANCE.send(PacketDistributor.PLAYER.with(battleManager.attacker::getServerEntity), new ShowCardDisplayPacket(battleManager.attacker.cardIDS.get(0)));
+        attackStart = battleManager -> battleManager.attacker.sendSystemMessage("Your turn. Select an attack for " + battleManager.attacker.getCard().displayName + ".");
+
+        attackEnd = battleManager -> {
+            battleManager.sendSystemMessageToBoth(battleManager.defender.getCard().displayName + " HP: " + battleManager.defender.getCard().health);
+            if(battleManager.defender.getCard().health < 0) {
+                battleManager.sendSystemMessageToBoth(battleManager.defender.getCard().displayName + " has fainted!");
+                battleManager.attacker.sendSystemMessage("Please wait for your opponent to select a new card.");
+                CardPacketHandler.INSTANCE.send(PacketDistributor.PLAYER.with(() -> battleManager.defender.player), new ShowCardSelectionScreenPacket((ArrayList<CardID>) battleManager.defender.cardIDS.stream().filter(cardID -> cardID.card.health > 0).collect(Collectors.toList()),60, 85, 5, 1));
+                state = State.SELECT;
+            } else {
+                battleManager.attacker.sendSystemMessage("Attack phase over.");
+                battleManager.sendSystemMessageToBoth("Swapping roles.");
+                battleManager.swapPlayers();
+                battleManager.actionQueue.remove().accept(battleManager);
+            }
         };
 
-        attackerEnd = battleManager -> {
-            battleManager.attacker.sendMessage("Attack phase over.");
-            battleManager.swapPlayers();
-            int startIdx = battleManager.actionQueue.indexOf(turnBookend);
-            int endIdx = battleManager.actionQueue.indexOf(roundBookend);
-            battleManager.actionQueue.add(endIdx, attackerEnd);
-            battleManager.actionQueue.add(endIdx + 1, turnBookend);
-            battleManager.actionQueue.add(startIdx, attackerStart);
-            battleManager.actionQueue.remove(turnBookend);
-            battleManager.cycle();
+        turnBookend = battleManager -> {
+            battleManager.actionQueue.addFirst(battleManager.attackStart);
+            battleManager.actionQueue.add(battleManager.actionQueue.indexOf(battleManager.roundBookend), battleManager.attackEnd);
+            battleManager.actionQueue.add(battleManager.turnBookend);
+            battleManager.turnCount++;
+            battleManager.actionQueue.remove().accept(battleManager);
+            if(battleManager.turnCount % 2 == 0) {
+                battleManager.actionQueue.remove().accept(battleManager);
+            }
         };
+
+        roundBookend = battleManager -> {
+            battleManager.actionQueue.add(battleManager.actionQueue.indexOf(battleManager.roundBookend) + 1, battleManager.attackStart);
+            battleManager.actionQueue.add(battleManager.actionQueue.indexOf(battleManager.turnBookend), battleManager.attackEnd);
+            battleManager.actionQueue.add(battleManager.roundBookend);
+            battleManager.turnCount++;
+            battleManager.sendSystemMessageToBoth("Round Over!");
+            battleManager.actionQueue.remove().accept(battleManager);
+        };
+
+        actionQueue.add(attackStart);
+        actionQueue.add(attackEnd);
+        actionQueue.add(turnBookend);
+        actionQueue.add(roundBookend);
     }
 
-    public void update(int entityID, ArrayList<CardID> cardIDS) {
+    public void update(ServerPlayerEntity entity, ArrayList<CardID> cardIDS) {
+        BattlePlayer player = attacker.player == entity ? attacker : defender;
         switch(state) {
             case INIT:
-                init(entityID, cardIDS);
-                break;
+                if(player.cardIDS == null) {
+                    player.cardIDS = cardIDS;
+                }
+                if(attacker.cardIDS == null || defender.cardIDS == null) {
+                    break;
+                }
+                state = State.START;
             case START:
-                determineFirstPlayer();
-                actionQueue.add(attackerStart);
-                actionQueue.add(attackerEnd);
-                actionQueue.add(turnBookend);
-                actionQueue.add(roundBookend);
-                cycle();
+                sendSystemMessageToBoth("BATTLE START!");
+                Optional<CardID> minAttacker = attacker.cardIDS.stream().min(Comparator.comparingInt(cardID -> cardID.card.health));
+                Optional<CardID> minDefender = defender.cardIDS.stream().min(Comparator.comparingInt(cardID -> cardID.card.health));
+                if(minAttacker.get().card.health > minDefender.get().card.health) {
+                    swapPlayers();
+                }
+                state = State.TURN;
+            case TURN:
+                actionQueue.remove().accept(this);
                 break;
             case REVIVAL:
-                cardIDS.get(0).card.resetHealth();
+                break;
+            case SKIP:
+                break;
+            case SELECT:
+                player.setFirstCard(cardIDS.get(0));
                 state = State.TURN;
-                cycle();
+                actionQueue.remove().accept(this);
+                break;
             default:
                 break;
         }
     }
 
-    public void cycle() {
-        actionQueue.remove().accept(this);
-    }
-
-    public void actionSelection(int entityID, CardID cardID, int index) {
-        if(attacker.entityID != entityID || cardID != attacker.cardIDS.get(0)) {
+    public void actionSelection(ServerPlayerEntity entity, CardID cardID, int index) {
+        if(entity != attacker.player || cardID != attacker.getCardID()) {
             return;
         }
 
-        int idx = actionQueue.indexOf(attackerEnd);
-        actionQueue.add(idx, attacker.cardIDS.get(0).card.cardActions[index].action);
-        cycle();
-    }
-
-    public void addAfterRound(Consumer<BattleManager> consumer) {
-        int idx = actionQueue.indexOf(roundBookend);
-        actionQueue.add(idx + 1, consumer);
-    }
-
-    public void addAfterTurn(Consumer<BattleManager> consumer) {
-        int idx = actionQueue.indexOf(turnBookend);
-        actionQueue.add(idx + 1, consumer);
-    }
-
-    private void init(int entityID, ArrayList<CardID> cardIDS) {
-        BattlePlayer player = attacker.entityID == entityID ? attacker : defender;
-        if(player.cardIDS == null) {
-            player.cardIDS = cardIDS;
+        addToTurn(cardID.card.cardActions.get(index).action);
+        if(cardID.card.cardPassives != null) {
+            actionQueue.addAll(actionQueue.indexOf(attackEnd), cardID.card.cardPassives.stream().map(e -> e.passive).collect(Collectors.toList()));
         }
-        state = State.START;
+
+        while(!actionQueue.getFirst().equals(attackEnd)) {
+            actionQueue.remove().accept(this);
+        }
+        actionQueue.remove().accept(this);
+    }
+
+    public void addToTurn(Consumer<BattleManager> consumer) {
+        actionQueue.add(actionQueue.indexOf(attackEnd), consumer);
+    }
+
+    public void addNextTurn(Consumer<BattleManager> consumer) {
+        actionQueue.add(actionQueue.indexOf(roundBookend), consumer);
+    }
+
+    public void addNextRound(Consumer<BattleManager> consumer) {
+        actionQueue.add(consumer);
     }
 
     private void swapPlayers() {
@@ -114,35 +157,33 @@ public class BattleManager {
         defender = tmp;
     }
 
-    private void determineFirstPlayer() {
-        int minHealth = Integer.MAX_VALUE;
-        CardID minCard = null;
-        for(CardID cardID : attacker.cardIDS) {
-            if(cardID.card.health < minHealth) {
-                minHealth = cardID.card.health;
-                minCard = cardID;
-            }
-        }
-
-        for(CardID cardID : defender.cardIDS) {
-            if(cardID.card.health < minHealth) {
-                minHealth = cardID.card.health;
-                minCard = cardID;
-            }
-        }
-
-        if(defender.cardIDS.contains(minCard)) {
-            swapPlayers();
-        }
-        state = State.TURN;
+    public void sendSystemMessageToBoth(String s) {
+        attacker.sendSystemMessage(s);
+        defender.sendSystemMessage(s);
     }
 
-    public void sendToBoth(String s) {
-        attacker.sendMessage(s);
-        defender.sendMessage(s);
+    public void sendAttackerMessageToBoth(String s) {
+        attacker.player.sendMessage(new TranslationTextComponent("[%s] " + s, new StringTextComponent(attacker.player.getScoreboardName()).withStyle(TextFormatting.DARK_GREEN, TextFormatting.BOLD)), attacker.player.getUUID());
+        defender.player.sendMessage(new TranslationTextComponent("[%s] " + s, new StringTextComponent(attacker.player.getScoreboardName()).withStyle(TextFormatting.DARK_RED, TextFormatting.BOLD)), defender.player.getUUID());
     }
 
-
-
-
+    @Override
+    public String toString() {
+        StringBuilder stringBuilder = new StringBuilder();
+        stringBuilder.append("*************\n");
+        for(Consumer<BattleManager> consumer : actionQueue) {
+            if (attackStart.equals(consumer)) {
+                stringBuilder.append("attackStart\n");
+            } else if(attackEnd.equals(consumer)) {
+                stringBuilder.append("attackEnd\n");
+            } else if(turnBookend.equals(consumer)) {
+                stringBuilder.append("turnBookend\n");
+            } else if(roundBookend.equals(consumer)) {
+                stringBuilder.append("roundBookend\n");
+            } else {
+                stringBuilder.append(consumer.toString()).append("\n");
+            }
+        }
+        return stringBuilder.toString();
+    }
 }

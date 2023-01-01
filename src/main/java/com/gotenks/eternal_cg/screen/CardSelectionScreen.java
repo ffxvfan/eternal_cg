@@ -1,13 +1,14 @@
 package com.gotenks.eternal_cg.screen;
 
 import com.gotenks.eternal_cg.items.CardID;
-import com.gotenks.eternal_cg.network.CardSelectionResponsePacket;
 import com.gotenks.eternal_cg.network.CardPacketHandler;
+import com.gotenks.eternal_cg.network.CardSelectionResponsePacket;
 import com.mojang.blaze3d.matrix.MatrixStack;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.util.text.StringTextComponent;
 
 import java.util.ArrayList;
+import java.util.stream.Collectors;
 
 public class CardSelectionScreen extends Screen {
 
@@ -30,7 +31,9 @@ public class CardSelectionScreen extends Screen {
     @Override
     public boolean mouseReleased(double mouseX, double mouseY, int whoKnows) {
         int idx = CardRenderUtil.mousePosToIndex(mouseX, mouseY, WIDTH, HEIGHT, MAX_COLS, cardIDS.size());
-        if(idx != -1 && !selectedIndexes.contains(idx)) {
+        if(selectedIndexes.contains(idx)) {
+            selectedIndexes.remove((Integer)idx);
+        } else if(idx != -1 && !selectedIndexes.contains(idx)) {
             selectedIndexes.add(idx);
             if(selectedIndexes.size() == MAX_SELECTIONS) {
                 this.onClose();
@@ -54,16 +57,20 @@ public class CardSelectionScreen extends Screen {
             CardRenderUtil.renderCard(matrixStack.last().pose(), cardIDS.get(hover), (hover % MAX_COLS) * WIDTH, (hover / MAX_COLS) * HEIGHT, WIDTH, HEIGHT, 1.1f);
         }
 
-        for(Integer i : selectedIndexes) {
-            drawString(matrixStack, CardRenderUtil.font, i.toString(), (i % MAX_COLS) * (WIDTH / 2), (i / MAX_COLS) * (HEIGHT / 2), 16777215);
+        for(int i = 0; i < selectedIndexes.size(); i++) {
+            drawString(matrixStack, CardRenderUtil.font, String.valueOf(i), (selectedIndexes.get(i) % MAX_COLS) * WIDTH + WIDTH/2, (selectedIndexes.get(i) / MAX_COLS) * HEIGHT + HEIGHT/2, 16777215);
         }
+
+//        for(Integer i : selectedIndexes) {
+//            drawString(matrixStack, CardRenderUtil.font, i.toString(), (i % MAX_COLS) * WIDTH, (i / MAX_COLS) * HEIGHT, 16777215);
+//        }
 
         super.render(matrixStack, mouseX, mouseY, partialTicks);
     }
 
     @Override
     public void onClose() {
-        CardPacketHandler.INSTANCE.sendToServer(new CardSelectionResponsePacket(this.minecraft.player.getId(), (ArrayList<CardID>) selectedIndexes.stream().map(i -> cardIDS.get(i))));
+        CardPacketHandler.INSTANCE.sendToServer(new CardSelectionResponsePacket((ArrayList<CardID>) selectedIndexes.stream().map(cardIDS::get).collect(Collectors.toList())));
         super.onClose();
     }
 

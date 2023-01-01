@@ -12,7 +12,7 @@ import net.minecraft.util.text.TextFormatting;
 
 public class CardCommand {
 
-    public static IFormattableTextComponent output(String s) {
+    public static IFormattableTextComponent systemOutput(String s) {
         return new StringTextComponent(s).withStyle(TextFormatting.ITALIC, TextFormatting.GRAY);
     }
 
@@ -25,10 +25,10 @@ public class CardCommand {
                         ServerPlayerEntity receiver = EntityArgument.getPlayer(ctx, "player");
 
                         if(PendingBattleManager.add(sender, receiver)) {
-                            sender.sendMessage(output(receiver.getScoreboardName() + " has received your battle request!"), sender.getUUID());
-                            receiver.sendMessage(output(sender.getScoreboardName() + " has sent you a battle request.\nType /eternalcg accept " + sender.getScoreboardName() + " to accept the battle!"), receiver.getUUID());
+                            sender.sendMessage(systemOutput(receiver.getScoreboardName() + " has received your battle request!"), sender.getUUID());
+                            receiver.sendMessage(systemOutput(sender.getScoreboardName() + " has sent you a battle request.\nType /eternalcg accept " + sender.getScoreboardName() + " to accept the battle!"), receiver.getUUID());
                         } else {
-                            sender.sendMessage(output("Could not add battle.\nYou or the request player is currently in a pending battle"), sender.getUUID());
+                            sender.sendMessage(systemOutput("Could not add battle.\nYou or " + receiver.getScoreboardName() + " is currently in a pending battle"), sender.getUUID());
                         }
                         return 1;
                     })))
@@ -39,10 +39,10 @@ public class CardCommand {
                         ServerPlayerEntity receiver = EntityArgument.getPlayer(ctx, "player");
 
                         if(PendingBattleManager.remove(sender, receiver)) {
-                            sender.sendMessage(output("Battle request cancelled"), sender.getUUID());
-                            receiver.sendMessage(output(sender.getScoreboardName() + " has cancelled your battle request"), receiver.getUUID());
+                            sender.sendMessage(systemOutput("Battle request cancelled"), sender.getUUID());
+                            receiver.sendMessage(systemOutput(sender.getScoreboardName() + " has cancelled your battle request"), receiver.getUUID());
                         } else {
-                            sender.sendMessage(output("Could not cancel battle request.\nYou may not have any pending requests"), sender.getUUID());
+                            sender.sendMessage(systemOutput("Could not cancel battle request.\nYou may not have any pending requests"), sender.getUUID());
                         }
                         return 1;
                     })))
@@ -53,19 +53,19 @@ public class CardCommand {
                         ServerPlayerEntity receiver = EntityArgument.getPlayer(ctx, "player");
 
                         if(PendingBattleManager.publish(sender, receiver)) {
-                            sender.sendMessage(output("Accepted battle with " + receiver.getScoreboardName()), sender.getUUID());
-                            receiver.sendMessage(output(sender.getScoreboardName() + " has accepted your battle request!"), receiver.getUUID());
+                            sender.sendMessage(systemOutput("Accepted battle with " + receiver.getScoreboardName()), sender.getUUID());
+                            receiver.sendMessage(systemOutput(sender.getScoreboardName() + " has accepted your battle request!"), receiver.getUUID());
                         } else {
-                            sender.sendMessage(output("Could not accept battle request.\nYou may not have any pending requests"), sender.getUUID());
+                            sender.sendMessage(systemOutput("Could not accept battle request.\nYou may not have any pending requests"), sender.getUUID());
                         }
                         return 1;
                     })))
                 .then(Commands.literal("list")
                 .executes(ctx -> {
                     ServerPlayerEntity player = ctx.getSource().getPlayerOrException();
-                    player.sendMessage(output("Listed are your pending requests:"), player.getUUID());
+                    player.sendMessage(systemOutput("Listed are your pending requests:"), player.getUUID());
                     for(String name : PendingBattleManager.listAllRequests(player)) {
-                        player.sendMessage(output(" - " + name), player.getUUID());
+                        player.sendMessage(systemOutput(" - " + name), player.getUUID());
                     }
                     return 1;
                 }));

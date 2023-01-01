@@ -1,6 +1,5 @@
 package com.gotenks.eternal_cg.screen;
 
-import com.gotenks.eternal_cg.EternalCG;
 import com.gotenks.eternal_cg.items.CardID;
 import com.mojang.blaze3d.systems.RenderSystem;
 import net.minecraft.client.Minecraft;

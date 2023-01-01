@@ -1,7 +1,6 @@
 package com.gotenks.eternal_cg.network;
 
 import com.gotenks.eternal_cg.EternalCG;
-import com.gotenks.eternal_cg.screen.CardDisplay;
 import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.fml.network.NetworkRegistry;
 import net.minecraftforge.fml.network.simple.SimpleChannel;

@@ -1,7 +1,6 @@
 package com.gotenks.eternal_cg.actions;
 
 import com.gotenks.eternal_cg.battle.BattleManager;
-import com.gotenks.eternal_cg.types.Type;
 
 import java.util.function.Consumer;
 

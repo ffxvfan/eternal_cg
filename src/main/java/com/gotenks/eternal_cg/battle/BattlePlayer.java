@@ -1,33 +1,42 @@
 package com.gotenks.eternal_cg.battle;
 
+import com.gotenks.eternal_cg.items.Card;
 import com.gotenks.eternal_cg.items.CardID;
-import net.minecraft.client.Minecraft;
 import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.util.text.StringTextComponent;
 import net.minecraft.util.text.TextFormatting;
+import net.minecraft.util.text.TranslationTextComponent;
 
 import java.util.ArrayList;
 import java.util.Collections;
 
 public class BattlePlayer {
-    public int entityID;
+    public ServerPlayerEntity player;
     public ArrayList<CardID> cardIDS;
 
-    public BattlePlayer(int entityID, ArrayList<CardID> cardIDS) {
-        this.entityID = entityID;
+    public BattlePlayer(ServerPlayerEntity player, ArrayList<CardID> cardIDS) {
+        this.player = player;
         this.cardIDS = cardIDS;
     }
 
-    public ServerPlayerEntity getServerEntity() {
-        return (ServerPlayerEntity) Minecraft.getInstance().level.getEntity(entityID);
-    }
-
     public void sendMessage(String s) {
-        getServerEntity().sendMessage(new StringTextComponent(s), getServerEntity().getUUID());
+        player.sendMessage(new StringTextComponent(s), player.getUUID());
     }
 
-    public void sendMessage(String s, TextFormatting textFormatting) {
-        getServerEntity().sendMessage(new StringTextComponent(s).withStyle(textFormatting), getServerEntity().getUUID());
+    public void sendSystemMessage(String s) {
+        player.sendMessage(new TranslationTextComponent("[%s] " + s, new StringTextComponent("SYSTEM").withStyle(TextFormatting.BOLD, TextFormatting.GRAY)), player.getUUID());
+    }
+
+    public Card getCard() {
+        return cardIDS.get(0).card;
+    }
+
+    public CardID getCardID() {
+        return cardIDS.get(0);
+    }
+
+    public void applyDamage(int damage) {
+        getCard().health -= damage;
     }
 
     public void setFirstCard(CardID card) {
