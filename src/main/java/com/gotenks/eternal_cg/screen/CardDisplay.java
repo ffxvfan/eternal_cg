@@ -13,7 +13,7 @@ public class CardDisplay extends Screen {
     private final CardID cardID;
 
     private int openTime = 0;
-    private final int threshold = 10;
+    private final int threshold = 5;
 
     public CardDisplay(CardID cardID) {
         super(new StringTextComponent(cardID.name + " screen"));

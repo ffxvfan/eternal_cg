@@ -58,12 +58,8 @@ public class CardSelectionScreen extends Screen {
         }
 
         for(int i = 0; i < selectedIndexes.size(); i++) {
-            drawString(matrixStack, CardRenderUtil.font, String.valueOf(i), (selectedIndexes.get(i) % MAX_COLS) * WIDTH + WIDTH/2, (selectedIndexes.get(i) / MAX_COLS) * HEIGHT + HEIGHT/2, 16777215);
+            drawString(matrixStack, CardRenderUtil.font, String.valueOf(i + 1), (selectedIndexes.get(i) % MAX_COLS) * WIDTH + WIDTH/2, (selectedIndexes.get(i) / MAX_COLS) * HEIGHT + HEIGHT/2, 16777215);
         }
-
-//        for(Integer i : selectedIndexes) {
-//            drawString(matrixStack, CardRenderUtil.font, i.toString(), (i % MAX_COLS) * WIDTH, (i / MAX_COLS) * HEIGHT, 16777215);
-//        }
 
         super.render(matrixStack, mouseX, mouseY, partialTicks);
     }

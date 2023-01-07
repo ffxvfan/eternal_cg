@@ -30,6 +30,7 @@ public class PendingBattleManager {
             return false;
         }
         pending.remove(player1);
+        pending.remove(player2);
         return true;
     }
 
@@ -54,8 +55,8 @@ public class PendingBattleManager {
                 player2Cards.add(cardID);
             }
         }
-
         CardPacketHandler.INSTANCE.send(PacketDistributor.PLAYER.with(() -> player2), new ShowCardSelectionScreenPacket(player2Cards, 60, 85, 5, 3));
+//      CardPacketHandler.INSTANCE.send(PacketDistributor.PLAYER.with(() -> player1), new ShowCardSelectionScreenPacket(player1Cards, 60, 85, 5, 3));
         BattleManagerFactory.add(player1, player2);
         remove(player2, player1);
         return true;
