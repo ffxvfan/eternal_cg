@@ -1,5 +1,6 @@
 package com.gotenks.eternal_cg.command;
 
+import com.gotenks.eternal_cg.battle.BattleManagerFactory;
 import com.gotenks.eternal_cg.battle.PendingBattleManager;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import net.minecraft.command.CommandSource;
@@ -24,7 +25,7 @@ public class CardCommand {
                         ServerPlayerEntity sender = ctx.getSource().getPlayerOrException();
                         ServerPlayerEntity receiver = EntityArgument.getPlayer(ctx, "player");
 
-                        if(PendingBattleManager.add(sender, receiver)) {
+                        if(PendingBattleManager.add(sender, receiver) && !(BattleManagerFactory.contains(sender) || BattleManagerFactory.contains(receiver))) {
                             sender.sendMessage(systemOutput(receiver.getScoreboardName() + " has received your battle request!"), sender.getUUID());
                             receiver.sendMessage(systemOutput(sender.getScoreboardName() + " has sent you a battle request.\nType /eternalcg accept " + sender.getScoreboardName() + " to accept the battle!"), receiver.getUUID());
                         } else {

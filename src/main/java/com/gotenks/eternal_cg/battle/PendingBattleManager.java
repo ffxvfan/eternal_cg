@@ -55,11 +55,6 @@ public class PendingBattleManager {
             }
         }
 
-//        //DELETE ME
-//        CardPacketHandler.INSTANCE.send(PacketDistributor.PLAYER.with(() -> player1), new ShowCardSelectionScreenPacket(player2Cards, 60, 85, 5, 3));
-//        //DELETE ME
-
-
         CardPacketHandler.INSTANCE.send(PacketDistributor.PLAYER.with(() -> player2), new ShowCardSelectionScreenPacket(player2Cards, 60, 85, 5, 3));
         BattleManagerFactory.add(player1, player2);
         remove(player2, player1);

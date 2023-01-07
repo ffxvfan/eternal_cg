@@ -42,7 +42,7 @@ public class BattleManager {
     public BattleManager(BattlePlayer attacker, BattlePlayer defender) {
         this.attacker = attacker;
         this.defender = defender;
-        this.state = State.SELECT;
+        this.state = State.INIT;
 
         attackStart = battleManager -> battleManager.attacker.sendSystemMessage("Your turn. Select an attack for " + battleManager.attacker.getCard().displayName + ".");
 
@@ -51,8 +51,17 @@ public class BattleManager {
             if(battleManager.defender.getCard().health < 0) {
                 battleManager.sendSystemMessageToBoth(battleManager.defender.getCard().displayName + " has fainted!");
                 battleManager.attacker.sendSystemMessage("Please wait for your opponent to select a new card.");
-                CardPacketHandler.INSTANCE.send(PacketDistributor.PLAYER.with(() -> battleManager.defender.player), new ShowCardSelectionScreenPacket((ArrayList<CardID>) battleManager.defender.cardIDS.stream().filter(cardID -> cardID.card.health > 0).collect(Collectors.toList()),60, 85, 5, 1));
-                state = State.SELECT;
+                ArrayList<CardID> cardIDS = (ArrayList<CardID>) battleManager.defender.cardIDS.stream().filter(cardID -> cardID.card.health > 0).collect(Collectors.toList());
+                if(cardIDS.size() > 0) {
+                    CardPacketHandler.INSTANCE.send(PacketDistributor.PLAYER.with(() -> battleManager.defender.player), new ShowCardSelectionScreenPacket(cardIDS, 60, 85, 5, 1));
+                    state = State.SELECT;
+                } else {
+                    battleManager.sendSystemMessageToBoth(battleManager.attacker.player.getScoreboardName() + " WINS!");
+                    battleManager.sendSystemMessageToBoth("GAME OVER. GGS");
+                    battleManager.attacker.cardIDS.forEach(cardID -> cardID.card.reset());
+                    battleManager.defender.cardIDS.forEach(cardID -> cardID.card.reset());
+                    BattleManagerFactory.remove(battleManager.attacker.player, battleManager.defender.player);
+                }
             } else {
                 battleManager.attacker.sendSystemMessage("Attack phase over.");
                 battleManager.sendSystemMessageToBoth("Swapping roles.");

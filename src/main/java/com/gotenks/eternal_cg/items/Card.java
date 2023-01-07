@@ -1,7 +1,6 @@
 package com.gotenks.eternal_cg.items;
 
-import com.gotenks.eternal_cg.actions.CardAction;
-import com.gotenks.eternal_cg.actions.CardPassive;
+import com.gotenks.eternal_cg.actions.*;
 import com.gotenks.eternal_cg.network.CardPacketHandler;
 import com.gotenks.eternal_cg.network.ShowCardDisplayPacket;
 import com.gotenks.eternal_cg.types.Type;
@@ -47,7 +46,12 @@ public class Card extends Item {
         return ActionResult.success(itemStack);
     }
 
-    public void resetHealth() {
+    public void reset() {
         health = MAX_HEALTH;
+        cardActions.forEach(cardAction -> {
+            if(cardAction instanceof ILimited) {
+                ((ILimited) cardAction).reset();
+            }
+        });
     }
 }

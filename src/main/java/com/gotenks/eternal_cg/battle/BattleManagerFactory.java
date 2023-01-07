@@ -29,4 +29,13 @@ public class BattleManagerFactory {
             battleManager.actionSelection(entity, cardID, index);
         }
     }
-}
+
+    public static void remove(ServerPlayerEntity entity1, ServerPlayerEntity entity2) {
+        factory.remove(entity1);
+        factory.remove(entity2);
+    }
+
+    public static boolean contains(ServerPlayerEntity entity) {
+        return factory.containsKey(entity);
+    }
+ }
