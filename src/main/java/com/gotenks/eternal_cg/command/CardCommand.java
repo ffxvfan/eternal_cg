@@ -57,7 +57,7 @@ public class CardCommand {
                             sender.sendMessage(systemOutput("Accepted battle with " + receiver.getScoreboardName()), sender.getUUID());
                             receiver.sendMessage(systemOutput(sender.getScoreboardName() + " has accepted your battle request!"), receiver.getUUID());
                         } else {
-                            sender.sendMessage(systemOutput("Could not accept battle request.\nYou may not have any pending requests"), sender.getUUID());
+                            sender.sendMessage(systemOutput("Failed to accept battle request."), sender.getUUID());
                         }
                         return 1;
                     })))

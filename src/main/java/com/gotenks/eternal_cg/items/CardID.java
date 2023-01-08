@@ -78,7 +78,7 @@ public enum CardID {
                     battleManager.sendAttackerMessageToBoth("Warmth: 20HP restored");
                     battleManager.attacker.getCard().health += 20;
                 } else {
-                    battleManager.attacker.sendSystemMessage("Could not use Warmth");
+                    battleManager.attacker.sendSystemMessage("Could not use Warmth.");
                 }
             }, 2)
     )), null)),
@@ -160,7 +160,7 @@ public enum CardID {
             }),
             new CardActionLimited("Intimidating Size", "This dragon is Stage 5. Pick one move for your opponent to skip out of fear." , battleManager -> {
                 battleManager.addNextTurn(battleManager1 -> {
-                    battleManager1.sendAttackerMessageToBoth("Intimidating Size effect: Turn skipped!");
+                    battleManager1.sendDefenderMessageToBoth("Intimidating Size effect: Turn skipped!");
                     while(!battleManager1.actionQueue.getFirst().equals(battleManager1.attackEnd)) {
                         battleManager1.actionQueue.remove();
                     }
@@ -216,7 +216,7 @@ public enum CardID {
                     battleManager1.attacker.getCard().cardActions.forEach(cardAction -> {
                         if(cardAction instanceof CardAttack && battleManager1.actionQueue.contains(cardAction.action)
                         && (((CardAttack)cardAction).type == Type.FIRE || ((CardAttack)cardAction).type == Type.FAUNA)) {
-                            battleManager1.sendAttackerMessageToBoth("Tough as a Boulder effect: " + cardAction.name + " cannot harm Tenks!");
+                            battleManager1.sendDefenderMessageToBoth("Tough as a Boulder effect: " + cardAction.name + " cannot harm Tenks!");
                             battleManager1.actionQueue.remove(cardAction.action);
                         }
                     });
@@ -286,7 +286,7 @@ public enum CardID {
     HAZY("hazy", new Card(new Item.Properties().tab(EternalCGTab), "Hazy", 440, Type.MOON, Type.ICE, new ArrayList<>(Arrays.asList(
             new CardAttack("Moon Dust", "23atk, sun your opponent and take away 10atk from their next move.", Type.MOON, 23, battleManager -> {
                 battleManager.addNextTurn(battleManager1 -> {
-                    battleManager1.sendAttackerMessageToBoth("Moon Dust effect: 10atk reduction.");
+                    battleManager1.sendDefenderMessageToBoth("Moon Dust effect: 10atk reduction.");
                     battleManager1.defender.getCard().health += 10;
                 });
             }),
@@ -374,7 +374,7 @@ public enum CardID {
             }),
             new CardAttackLimited("Blinding Darkness", "30atk, stun an opponent for one move, once per round", Type.MOON, 30, battleManager -> {
                 battleManager.addNextTurn(battleManager1 -> {
-                    battleManager1.sendAttackerMessageToBoth("Blinding Darkness effect: Turn Skipped!");
+                    battleManager1.sendDefenderMessageToBoth("Blinding Darkness effect: Turn Skipped!");
                     while(!battleManager1.actionQueue.getFirst().equals(battleManager1.attackEnd)) {
                         battleManager1.actionQueue.remove();
                     }
@@ -409,7 +409,7 @@ public enum CardID {
             }),
             new CardAction("Crash Log", "Cause your opponent to miss a turn and deal +20atk to them if they are playing a Player card.", battleManager -> {
                 battleManager.addNextTurn(battleManager1 -> {
-                    battleManager1.sendAttackerMessageToBoth("Crash Log effect: Turn Skipped!");
+                    battleManager1.sendDefenderMessageToBoth("Crash Log effect: Turn Skipped!");
                     while(!battleManager1.actionQueue.getFirst().equals(battleManager1.attackEnd)) {
                         battleManager1.actionQueue.remove();
                     }

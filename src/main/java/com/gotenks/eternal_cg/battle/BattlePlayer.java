@@ -1,5 +1,6 @@
 package com.gotenks.eternal_cg.battle;
 
+import com.gotenks.eternal_cg.EternalCG;
 import com.gotenks.eternal_cg.items.Card;
 import com.gotenks.eternal_cg.items.CardID;
 import net.minecraft.entity.player.ServerPlayerEntity;
@@ -25,6 +26,7 @@ public class BattlePlayer {
 
     public void sendSystemMessage(String s) {
         player.sendMessage(new TranslationTextComponent("[%s] " + s, new StringTextComponent("SYSTEM").withStyle(TextFormatting.BOLD, TextFormatting.GRAY)), player.getUUID());
+        EternalCG.LOGGER.debug("[SYSTEM_TO_PLAYER] " + s);
     }
 
     public Card getCard() {

@@ -96,7 +96,7 @@ public class BattleManager {
             battleManager.actionQueue.add(battleManager.actionQueue.indexOf(battleManager.roundBookend) + 1, battleManager.attackStart);
             battleManager.actionQueue.add(battleManager.actionQueue.indexOf(battleManager.turnBookend), battleManager.attackEnd);
             battleManager.actionQueue.add(battleManager.roundBookend);
-            battleManager.turnCount++;
+//          battleManager.turnCount++;
             battleManager.sendSystemMessageToBoth("Round Over!");
             battleManager.actionQueue.remove().accept(battleManager);
             EternalCG.LOGGER.info("ROUND_BOOKEND");
@@ -132,6 +132,10 @@ public class BattleManager {
                 actionQueue.remove().accept(this);
                 break;
             case REVIVAL:
+                cardIDS.get(0).card.health = cardIDS.get(0).card.MAX_HEALTH;
+                sendAttackerMessageToBoth(cardIDS.get(0).card.displayName + " has been revived.");
+                state = State.TURN;
+                actionQueue.remove().accept(this);
                 break;
             case SKIP:
                 break;
@@ -182,11 +186,19 @@ public class BattleManager {
     public void sendSystemMessageToBoth(String s) {
         attacker.sendSystemMessage(s);
         defender.sendSystemMessage(s);
+        EternalCG.LOGGER.debug("[SYSTEM] " + s);
     }
 
     public void sendAttackerMessageToBoth(String s) {
         attacker.player.sendMessage(new TranslationTextComponent("[%s] " + s, new StringTextComponent(attacker.player.getScoreboardName()).withStyle(TextFormatting.DARK_GREEN, TextFormatting.BOLD)), attacker.player.getUUID());
         defender.player.sendMessage(new TranslationTextComponent("[%s] " + s, new StringTextComponent(attacker.player.getScoreboardName()).withStyle(TextFormatting.DARK_RED, TextFormatting.BOLD)), defender.player.getUUID());
+        EternalCG.LOGGER.debug("[ATTACKER_MSG] " + s);
+    }
+
+    public void sendDefenderMessageToBoth(String s) {
+        attacker.player.sendMessage(new TranslationTextComponent("[%s] " + s, new StringTextComponent(defender.player.getScoreboardName()).withStyle(TextFormatting.DARK_GREEN, TextFormatting.BOLD)), attacker.player.getUUID());
+        defender.player.sendMessage(new TranslationTextComponent("[%s] " + s, new StringTextComponent(defender.player.getScoreboardName()).withStyle(TextFormatting.DARK_RED, TextFormatting.BOLD)), defender.player.getUUID());
+        EternalCG.LOGGER.debug("[DEFENDER_MSG] " + s);
     }
 
     @Override
