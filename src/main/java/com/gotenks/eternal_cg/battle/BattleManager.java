@@ -120,7 +120,10 @@ public class BattleManager {
                     break;
                 }
                 state = State.START;
+            case SELECT:
+                player.setFirstCard(cardIDS.get(0));
             case START:
+                turnCount = 0;
                 sendSystemMessageToBoth("BATTLE START!");
                 Optional<CardID> minAttacker = attacker.cardIDS.stream().min(Comparator.comparingInt(cardID -> cardID.card.health));
                 Optional<CardID> minDefender = defender.cardIDS.stream().min(Comparator.comparingInt(cardID -> cardID.card.health));
@@ -138,11 +141,6 @@ public class BattleManager {
                 actionQueue.remove().accept(this);
                 break;
             case SKIP:
-                break;
-            case SELECT:
-                player.setFirstCard(cardIDS.get(0));
-                state = State.TURN;
-                actionQueue.remove().accept(this);
                 break;
             default:
                 break;

@@ -65,7 +65,7 @@ public enum CardID {
             })
     )))),
 
-    EMILY("emily", new Card(new Item.Properties().tab(EternalCGTab), "Emily", 100, Type.SUN, Type.LAVA, new ArrayList<>(Arrays.asList(
+    EMILY("emily", new Card(new Item.Properties().tab(EternalCGTab), "Emily", 330, Type.SUN, Type.LAVA, new ArrayList<>(Arrays.asList(
             new CardAttack("Blazing Heat", "56atk", Type.SUN, 56, battleManager -> {}),
             new CardAttack("Melt My Enemy", "34atk, deal +12atk if your opponent has an Ice major", Type.LAVA, 34, battleManager -> {
                 if(battleManager.defender.getCard().major == Type.ICE) {
