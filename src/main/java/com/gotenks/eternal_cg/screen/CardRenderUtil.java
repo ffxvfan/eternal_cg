@@ -1,6 +1,8 @@
 package com.gotenks.eternal_cg.screen;
 
-import com.gotenks.eternal_cg.items.CardID;
+import com.gotenks.eternal_cg.actions.ICardAction;
+import com.gotenks.eternal_cg.cards.CardID;
+import com.mojang.blaze3d.matrix.MatrixStack;
 import com.mojang.blaze3d.systems.RenderSystem;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.FontRenderer;
@@ -9,6 +11,10 @@ import net.minecraft.client.renderer.Tessellator;
 import net.minecraft.client.renderer.WorldVertexBufferUploader;
 import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 import net.minecraft.util.math.vector.Matrix4f;
+
+import java.util.Objects;
+
+import static net.minecraft.client.gui.AbstractGui.drawString;
 
 public class CardRenderUtil {
 
@@ -33,7 +39,7 @@ public class CardRenderUtil {
     }
 
     public static void renderCard(Matrix4f matrix4f, CardID cardID, int x, int y, int width, int height, float scale) {
-        Minecraft.getInstance().getTextureManager().bind(cardID.getResourceLocation());
+        Minecraft.getInstance().getTextureManager().bind(Objects.requireNonNull(cardID.card.getRegistryName()));
         RenderSystem.pushMatrix();
         RenderSystem.translatef(x, y, 0);
         RenderSystem.scalef(scale, scale, 0);
@@ -46,5 +52,9 @@ public class CardRenderUtil {
         bufferbuilder.end();
         WorldVertexBufferUploader.end(bufferbuilder);
         RenderSystem.popMatrix();
+    }
+
+    public static void renderDescription(MatrixStack matrixStack, ICardAction action, int x, int y, int color) {
+        drawString(matrixStack, font, action.toString(), x, y, color);
     }
 }

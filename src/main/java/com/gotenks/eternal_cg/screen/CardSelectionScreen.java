@@ -1,8 +1,8 @@
 package com.gotenks.eternal_cg.screen;
 
-import com.gotenks.eternal_cg.items.CardID;
+import com.gotenks.eternal_cg.cards.CardID;
 import com.gotenks.eternal_cg.network.CardPacketHandler;
-import com.gotenks.eternal_cg.network.CardSelectionResponsePacket;
+import com.gotenks.eternal_cg.network.CardSelectionResponse;
 import com.mojang.blaze3d.matrix.MatrixStack;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.util.text.StringTextComponent;
@@ -66,7 +66,7 @@ public class CardSelectionScreen extends Screen {
 
     @Override
     public void onClose() {
-        CardPacketHandler.INSTANCE.sendToServer(new CardSelectionResponsePacket((ArrayList<CardID>) selectedIndexes.stream().map(cardIDS::get).collect(Collectors.toList())));
+        CardPacketHandler.INSTANCE.sendToServer(new CardSelectionResponse((ArrayList<CardID>) selectedIndexes.stream().map(cardIDS::get).collect(Collectors.toList())));
         super.onClose();
     }
 

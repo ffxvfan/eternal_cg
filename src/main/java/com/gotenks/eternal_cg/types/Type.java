@@ -10,7 +10,8 @@ public enum Type {
     FLORA(32),
     METAL(64),
     LAVA(128),
-    ROCK(256);
+    ROCK(256),
+    NO_TYPE(-1);
 
     private final int ID;
     Type(int ID) {
@@ -31,7 +32,7 @@ public enum Type {
             FIRE.ID | ICE.ID | FLORA.ID,
     };
 
-    public static int typeDamageMod(Type atkType, Type defType, boolean isMajor) {
-        return (strengths[atkType.ordinal()] & defType.ID) > 0 ? (isMajor ? 7 : 2) : 0;
+    public static boolean isWeakAgainst(Type atkType, Type defType) {
+        return (strengths[atkType.ordinal()] & defType.ID) > 0;
     }
 }

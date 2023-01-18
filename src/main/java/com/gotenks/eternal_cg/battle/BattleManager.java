@@ -1,221 +1,170 @@
 package com.gotenks.eternal_cg.battle;
 
-import com.gotenks.eternal_cg.EternalCG;
-import com.gotenks.eternal_cg.items.CardID;
-import com.gotenks.eternal_cg.network.CardPacketHandler;
-import com.gotenks.eternal_cg.network.ShowCardSelectionScreenPacket;
+import com.gotenks.eternal_cg.actions.ICardAction;
+import com.gotenks.eternal_cg.cards.CardID;
+import com.gotenks.eternal_cg.network.*;
 import net.minecraft.entity.player.ServerPlayerEntity;
-import net.minecraft.util.text.StringTextComponent;
-import net.minecraft.util.text.TextFormatting;
-import net.minecraft.util.text.TranslationTextComponent;
 import net.minecraftforge.fml.network.PacketDistributor;
 
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.LinkedList;
-import java.util.Optional;
-import java.util.function.Consumer;
+import java.util.function.BiConsumer;
 import java.util.stream.Collectors;
 
 public class BattleManager {
 
-    public enum State {
-        INIT,
-        START,
-        REVIVAL,
-        TURN,
-        SKIP,
-        SELECT,
-    }
+    public BattlePlayer attacker = null;
+    public BattlePlayer defender = null;
 
-    public BattlePlayer attacker;
-    public BattlePlayer defender;
-    public State state;
-    public int turnCount = 0;
+    public LinkedList<BiConsumer<ServerPlayerEntity, ICardResponsePacket>> responseQueue = new LinkedList<>();
+    public LinkedList<ICardAction> nextTurnEffects = new LinkedList<>();
 
-    public LinkedList<Consumer<BattleManager>> actionQueue = new LinkedList<>();
-    public Consumer<BattleManager> turnBookend;
-    public Consumer<BattleManager> roundBookend;
-    public Consumer<BattleManager> attackStart;
-    public Consumer<BattleManager> attackEnd;
-
+    public StringBuilder currentTurnMessage = new StringBuilder();
+    public int currentTurnDamage;
 
     public BattleManager(BattlePlayer attacker, BattlePlayer defender) {
-        this.attacker = attacker;
-        this.defender = defender;
-        this.state = State.INIT;
+        sendInitCardSelectionRequest(attacker);
+        sendInitCardSelectionRequest(defender);
 
-        attackStart = battleManager -> {
-            battleManager.attacker.sendSystemMessage("Your turn. Select an attack for " + battleManager.attacker.getCard().displayName + ".");
-            battleManager.defender.sendSystemMessage("Your opponent is selecting an attack...");
-            EternalCG.LOGGER.info("ATTACK_START");
-            EternalCG.LOGGER.info(this::toString);
-        };
-
-        attackEnd = battleManager -> {
-            battleManager.sendSystemMessageToBoth(battleManager.defender.getCard().displayName + " HP: " + battleManager.defender.getCard().health);
-            if(battleManager.defender.getCard().health <= 0) {
-                battleManager.sendSystemMessageToBoth(battleManager.defender.getCard().displayName + " has fainted!");
-                battleManager.attacker.sendSystemMessage("Please wait for your opponent to select a new card.");
-                ArrayList<CardID> cardIDS = (ArrayList<CardID>) battleManager.defender.cardIDS.stream().filter(cardID -> cardID.card.health > 0).collect(Collectors.toList());
-                if(cardIDS.size() > 0) {
-                    CardPacketHandler.INSTANCE.send(PacketDistributor.PLAYER.with(() -> battleManager.defender.player), new ShowCardSelectionScreenPacket(cardIDS, 60, 85, 5, 1));
-                    state = State.SELECT;
-                } else {
-                    battleManager.sendSystemMessageToBoth(battleManager.attacker.player.getScoreboardName() + " WINS!");
-                    battleManager.sendSystemMessageToBoth("GAME OVER. GGS");
-                    battleManager.attacker.cardIDS.forEach(cardID -> cardID.card.reset());
-                    battleManager.defender.cardIDS.forEach(cardID -> cardID.card.reset());
-                    BattleManagerFactory.remove(battleManager.attacker.player, battleManager.defender.player);
-                }
-            } else {
-                battleManager.defender.sendSystemMessage("Defense phase over.");
-                battleManager.attacker.sendSystemMessage("Attack phase over.");
-                battleManager.sendSystemMessageToBoth("Swapping roles.");
-                battleManager.swapPlayers();
-                battleManager.actionQueue.remove().accept(battleManager);
-            }
-            EternalCG.LOGGER.info("ATTACK_END");
-            EternalCG.LOGGER.info(this::toString);
-        };
-
-        turnBookend = battleManager -> {
-            battleManager.actionQueue.addFirst(battleManager.attackStart);
-            battleManager.actionQueue.add(battleManager.actionQueue.indexOf(battleManager.roundBookend), battleManager.attackEnd);
-            battleManager.actionQueue.add(battleManager.turnBookend);
-            battleManager.turnCount++;
-            battleManager.actionQueue.remove().accept(battleManager);
-            if(battleManager.turnCount % 2 == 0) {
-                battleManager.actionQueue.remove().accept(battleManager);
-            }
-            EternalCG.LOGGER.info("TURN_BOOKEND");
-            EternalCG.LOGGER.info(this::toString);
-        };
-
-        roundBookend = battleManager -> {
-            battleManager.actionQueue.add(battleManager.actionQueue.indexOf(battleManager.roundBookend) + 1, battleManager.attackStart);
-            battleManager.actionQueue.add(battleManager.actionQueue.indexOf(battleManager.turnBookend), battleManager.attackEnd);
-            battleManager.actionQueue.add(battleManager.roundBookend);
-//          battleManager.turnCount++;
-            battleManager.sendSystemMessageToBoth("Round Over!");
-            battleManager.actionQueue.remove().accept(battleManager);
-            EternalCG.LOGGER.info("ROUND_BOOKEND");
-            EternalCG.LOGGER.info(this::toString);
-        };
-
-        actionQueue.add(attackStart);
-        actionQueue.add(attackEnd);
-        actionQueue.add(turnBookend);
-        actionQueue.add(roundBookend);
+        responseQueue.add(this::getFirstPlayer);
+        responseQueue.add(this::getSecondPlayer);
     }
 
-    public void update(ServerPlayerEntity entity, ArrayList<CardID> cardIDS) {
-        BattlePlayer player = attacker.player == entity ? attacker : defender;
-        switch(state) {
-            case INIT:
-                if(player.cardIDS == null) {
-                    player.cardIDS = cardIDS;
-                }
-                if(attacker.cardIDS == null || defender.cardIDS == null) {
-                    break;
-                }
-                state = State.START;
-            case SELECT:
-                player.setFirstCard(cardIDS.get(0));
-            case START:
-                turnCount = 0;
-                sendSystemMessageToBoth("BATTLE START!");
-                Optional<CardID> minAttacker = attacker.cardIDS.stream().min(Comparator.comparingInt(cardID -> cardID.card.health));
-                Optional<CardID> minDefender = defender.cardIDS.stream().min(Comparator.comparingInt(cardID -> cardID.card.health));
-                if(minAttacker.get().card.health > minDefender.get().card.health) {
-                    swapPlayers();
-                }
-                state = State.TURN;
-            case TURN:
-                actionQueue.remove().accept(this);
-                break;
-            case REVIVAL:
-                cardIDS.get(0).card.health = cardIDS.get(0).card.MAX_HEALTH;
-                sendAttackerMessageToBoth(cardIDS.get(0).card.displayName + " has been revived.");
-                state = State.TURN;
-                actionQueue.remove().accept(this);
-                break;
-            case SKIP:
-                break;
-            default:
-                break;
-        }
+    private void sendInitCardSelectionRequest(BattlePlayer player) {
+        CardPacketHandler.INSTANCE.send(PacketDistributor.PLAYER.with(() -> player.player), new CardSelectionRequest(player.cardIDS, 60, 85, 7, 3));
     }
 
-    public void actionSelection(ServerPlayerEntity entity, CardID cardID, int index) {
-        if(entity != attacker.player || cardID != attacker.getCardID()) {
+    private void sendCardSelectionForAliveCards(BattlePlayer player) {
+        CardPacketHandler.INSTANCE.send(PacketDistributor.PLAYER.with(() -> player.player), new CardSelectionRequest(
+                (ArrayList<CardID>) player.cardIDS.stream().filter(id -> id.card.HP > 0).collect(Collectors.toList()), 60, 85, 7, 1
+        ));
+    }
+
+    private void waitForNewCardSelection(ServerPlayerEntity entity, ICardResponsePacket packet) {
+        // Only attacker can submit response
+        if(entity != attacker.player || packet instanceof CardDisplayResponse) {
+            responseQueue.add(this::waitForNewCardSelection);
+            defender.sendSystemMessage("It is not your turn. Please wait for your opponent.");
             return;
         }
 
-        addToTurn(cardID.card.cardActions.get(index).action);
-        if(cardID.card.cardPassives != null) {
-            actionQueue.addAll(actionQueue.indexOf(attackEnd), cardID.card.cardPassives.stream().map(e -> e.passive).collect(Collectors.toList()));
+        attacker.setFirstCard(((CardSelectionResponse) packet).cardIDS.get(0));
+    }
+
+    public void dispatchResponse(ServerPlayerEntity entity, ICardResponsePacket packet) {
+        responseQueue.remove().accept(entity, packet);
+    }
+
+    private void getFirstPlayer(ServerPlayerEntity entity, ICardResponsePacket packet) {
+        attacker = new BattlePlayer(entity, ((CardSelectionResponse) packet).cardIDS);
+    }
+
+    private void getSecondPlayer(ServerPlayerEntity entity, ICardResponsePacket packet) {
+        defender = new BattlePlayer(entity, ((CardSelectionResponse) packet).cardIDS);
+        battleStart();
+        if(attacker.getLowestHealthCardHP() > defender.getLowestHealthCardHP()) swapPlayers();
+    }
+
+    private void battleStart() {
+        sendSystemMessageToBoth("BATTLE START");
+        sendSystemMessageToBoth(attacker.player.getScoreboardName() + " VS " + defender.player.getScoreboardName());
+        responseQueue.add(this::waitForCardAction);
+    }
+
+    public void applyDamageStep(int dmg, String msg) {
+        currentTurnMessage.append(msg).append(": [+").append(dmg).append("], ");
+        currentTurnDamage += dmg;
+    }
+
+    public void waitForCardAction(ServerPlayerEntity entity, ICardResponsePacket packet) {
+        // Only attacker can submit response
+        if(entity != attacker.player) {
+            responseQueue.add(this::waitForCardAction);
+            defender.sendSystemMessage("It is not your turn. Please wait for your opponent.");
+            return;
         }
 
-        while(!actionQueue.getFirst().equals(attackEnd)) {
-            actionQueue.remove().accept(this);
+        // Only right card can submit response
+        if(((CardDisplayResponse) packet).cardID != attacker.getCardID()) {
+            responseQueue.add(this::waitForCardAction);
+            attacker.sendSystemMessage("Please select an attack for " + attacker.getCard().name + ".");
+            return;
         }
-        actionQueue.remove().accept(this);
+
+        // Unwind any effects from previous turn
+        while(!nextTurnEffects.isEmpty()) {
+            nextTurnEffects.remove().accept(this);
+        }
+
+        // Perform selected action
+        switch(((CardDisplayResponse) packet).index) {
+            case 0: attacker.getCard().majorAttack.accept(this); break;
+            case 1: attacker.getCard().minorAttack.accept(this); break;
+            case 2: attacker.getCard().buff.accept(this); break;
+            default: break;
+        }
+
+        // Final check for any do-over attempts
+        if(!responseQueue.isEmpty()) return;
+        turnFinish();
     }
 
-    public void addToTurn(Consumer<BattleManager> consumer) {
-        actionQueue.add(actionQueue.indexOf(attackEnd), consumer);
+    private void turnFinish() {
+        if(currentTurnDamage != 0) {
+            currentTurnMessage.append("TOTAL DAMAGE: ").append(currentTurnDamage);
+            sendOpposingMessageToBoth(currentTurnMessage.toString());
+            defender.applyDamage(currentTurnDamage);
+        }
+
+        if(defenderHasCardsLeft()) {
+            if(defender.getCard().HP <= 0) {
+                sendAttackerMessageToBoth(defender.getCard().name + " has been slain!");
+                responseQueue.add(this::waitForNewCardSelection);
+            }
+            currentTurnDamage = 0;
+            currentTurnMessage.setLength(0);
+            swapPlayers();
+        } else {
+            gameOver();
+        }
     }
 
-    public void addNextTurn(Consumer<BattleManager> consumer) {
-        actionQueue.add(actionQueue.indexOf(roundBookend), consumer);
+    private void gameOver() {
+        sendSystemMessageToBoth("GAME OVER");
+        sendSystemMessageToBoth(attacker.player.getScoreboardName() + "WINS. GGS");
+        BattleManagerFactory.remove(attacker.player, defender.player);
     }
 
-    public void addNextRound(Consumer<BattleManager> consumer) {
-        actionQueue.add(consumer);
+    private boolean defenderHasCardsLeft() {
+        return defender.cardIDS.stream().anyMatch(id -> id.card.HP > 0);
     }
 
     private void swapPlayers() {
         BattlePlayer tmp = attacker;
         attacker = defender;
         defender = tmp;
+
+        attacker.sendSystemMessage("You are attacking. Select an attack for " + attacker.getCard().name);
+        defender.sendSystemMessage("You are defending. Please wait for your opponent to select an attack.");
     }
 
     public void sendSystemMessageToBoth(String s) {
         attacker.sendSystemMessage(s);
         defender.sendSystemMessage(s);
-        EternalCG.LOGGER.debug("[SYSTEM] " + s);
     }
 
     public void sendAttackerMessageToBoth(String s) {
-        attacker.player.sendMessage(new TranslationTextComponent("[%s] " + s, new StringTextComponent(attacker.player.getScoreboardName()).withStyle(TextFormatting.DARK_GREEN, TextFormatting.BOLD)), attacker.player.getUUID());
-        defender.player.sendMessage(new TranslationTextComponent("[%s] " + s, new StringTextComponent(attacker.player.getScoreboardName()).withStyle(TextFormatting.DARK_RED, TextFormatting.BOLD)), defender.player.getUUID());
-        EternalCG.LOGGER.debug("[ATTACKER_MSG] " + s);
+        attacker.sendGoodMessage(s);
+        defender.sendOpposingMessage(attacker.player.getScoreboardName(), s);
     }
 
     public void sendDefenderMessageToBoth(String s) {
-        attacker.player.sendMessage(new TranslationTextComponent("[%s] " + s, new StringTextComponent(defender.player.getScoreboardName()).withStyle(TextFormatting.DARK_GREEN, TextFormatting.BOLD)), attacker.player.getUUID());
-        defender.player.sendMessage(new TranslationTextComponent("[%s] " + s, new StringTextComponent(defender.player.getScoreboardName()).withStyle(TextFormatting.DARK_RED, TextFormatting.BOLD)), defender.player.getUUID());
-        EternalCG.LOGGER.debug("[DEFENDER_MSG] " + s);
+        attacker.sendOpposingMessage(defender.player.getScoreboardName(), s);
+        defender.sendGoodMessage(s);
     }
 
-    @Override
-    public String toString() {
-        StringBuilder stringBuilder = new StringBuilder();
-        stringBuilder.append("*************\n");
-        for(Consumer<BattleManager> consumer : actionQueue) {
-            if (attackStart.equals(consumer)) {
-                stringBuilder.append("attackStart\n");
-            } else if(attackEnd.equals(consumer)) {
-                stringBuilder.append("attackEnd\n");
-            } else if(turnBookend.equals(consumer)) {
-                stringBuilder.append("turnBookend\n");
-            } else if(roundBookend.equals(consumer)) {
-                stringBuilder.append("roundBookend\n");
-            } else {
-                stringBuilder.append(consumer.toString()).append("\n");
-            }
-        }
-        return stringBuilder.toString();
+    public void sendOpposingMessageToBoth(String s) {
+        attacker.sendOpposingMessage(defender.player.getScoreboardName(), s);
+        defender.sendOpposingMessage(attacker.player.getScoreboardName(), s);
     }
 }

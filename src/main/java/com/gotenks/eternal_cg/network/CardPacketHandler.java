@@ -15,10 +15,9 @@ public class CardPacketHandler {
     );
 
     public static void init() {
-        INSTANCE.registerMessage(0, ShowCardSelectionScreenPacket.class, ShowCardSelectionScreenPacket::encode, ShowCardSelectionScreenPacket::decode, ShowCardSelectionScreenPacket::handle);
-        INSTANCE.registerMessage(1, CardSelectionResponsePacket.class, CardSelectionResponsePacket::encode, CardSelectionResponsePacket::decode, CardSelectionResponsePacket::handle);
-        INSTANCE.registerMessage(2, ShowCardDisplayPacket.class, ShowCardDisplayPacket::encode, ShowCardDisplayPacket::decode, ShowCardDisplayPacket::handle);
-        INSTANCE.registerMessage(3, CardDisplayResponsePacket.class, CardDisplayResponsePacket::encode, CardDisplayResponsePacket::decode, CardDisplayResponsePacket::handle);
+        INSTANCE.registerMessage(0, CardSelectionRequest.class, CardSelectionRequest::encode, CardSelectionRequest::decode, CardSelectionRequest::handle);
+        INSTANCE.registerMessage(1, CardSelectionResponse.class, CardSelectionResponse::encode, CardSelectionResponse::decode, CardSelectionResponse::handle);
+        INSTANCE.registerMessage(2, CardDisplayRequest.class, CardDisplayRequest::encode, CardDisplayRequest::decode, CardDisplayRequest::handle);
+        INSTANCE.registerMessage(3, CardDisplayResponse.class, CardDisplayResponse::encode, CardDisplayResponse::decode, CardDisplayResponse::handle);
     }
-
 }

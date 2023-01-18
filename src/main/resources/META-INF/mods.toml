@@ -7,7 +7,7 @@ version="${file.jarVersion}"
 displayName="Eternal TCG"
 logoFile=""
 credits="The eternal smp goober group"
-authors="tba"
+authors="DragNScale (DragN), EvangeliX (Tenks)"
 description='''
 The ETERNAL SMP's Trading Card Game
 '''

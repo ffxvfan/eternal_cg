@@ -1,51 +1,95 @@
 package com.gotenks.eternal_cg.actions;
 
 import com.gotenks.eternal_cg.battle.BattleManager;
+import com.gotenks.eternal_cg.cards.CardID;
 import com.gotenks.eternal_cg.types.Type;
 
+import java.util.ArrayList;
 import java.util.Random;
-import java.util.function.Consumer;
 
-public class CardAttack extends CardAction {
 
-    public int baseDamage;
+public class CardAttack implements ICardAction {
+
+    public String name;
+    public String description;
     public Type type;
-    public Consumer<BattleManager> effect;
+    public int baseDmg;
+    public ArrayList<ICardAction> effects;
 
-    public CardAttack(String name, String description, Type type, int baseDamage, Consumer<BattleManager> effect) {
-        super(name, description, battleManager -> {
-            int damage = new Random().nextInt(baseDamage + 1);
-            battleManager.sendAttackerMessageToBoth("Selected " + name);
-            battleManager.sendAttackerMessageToBoth("?Roll: " + damage);
-            if (damage < 5) {
-                battleManager.sendAttackerMessageToBoth("Attack rolled for less than 5... opponent will deal +5atk next turn.");
-                battleManager.addNextTurn(battleManager1 -> {
-                    battleManager1.sendAttackerMessageToBoth("Previous turn was a miss, +5atk");
-                    battleManager1.defender.applyDamage(5);
-                });
-                effect.accept(battleManager);
-                return;
-            } else if (damage == baseDamage) {
-                battleManager.sendAttackerMessageToBoth("Critical! +10atk.");
-                damage += 10;
-            }
-            effect.accept(battleManager);
+    public CardAttack(Builder builder) {
+        this.name = builder.name;
+        this.description = builder.description;
+        this.type = builder.type;
+        this.baseDmg = builder.baseDmg;
+        this.effects = builder.effects;
+    }
 
-            int majorAddl = Type.typeDamageMod(type, battleManager.defender.getCard().major, true);
-            int minorAddl = Type.typeDamageMod(type, battleManager.defender.getCard().minor, false);
-            if(majorAddl > 0) {
-                battleManager.sendAttackerMessageToBoth(type.name() + " has major advantage over " + battleManager.defender.getCard().major + ". +7atk!" );
-                battleManager.defender.applyDamage(7);
-            }
-            if(minorAddl > 0) {
-                battleManager.sendAttackerMessageToBoth(type.name() + " has minor advantage over " + battleManager.defender.getCard().minor + ". +2atk!" );
-                battleManager.defender.applyDamage(2);
-            }
-            battleManager.defender.applyDamage(damage);
-        });
-        this.type = type;
-        this.baseDamage = baseDamage;
-        this.effect = effect;
-        this.description = name + " (" + type.toString() + ")";
+    private void nextTurnMissEffect(BattleManager bm) {
+        bm.applyDamageStep(5, "Previous Turn Miss");
+    }
+
+    private void weaknessCalc(BattleManager bm) {
+        if(Type.isWeakAgainst(type, bm.defender.getCard().majorType())) bm.applyDamageStep(7, "Major Bonus");
+        if(Type.isWeakAgainst(type, bm.defender.getCard().minorType())) bm.applyDamageStep(2, "Minor Bonus");
+    }
+
+    private boolean tenksCheck(BattleManager bm) {
+        return bm.defender.getCardID() == CardID.TENKS && (type == Type.FIRE || type == Type.FAUNA);
+    }
+
+    @Override
+    public void accept(BattleManager bm) {
+        int dmg = new Random().nextInt(baseDmg + 1);
+        if(dmg <= 5) {
+            bm.nextTurnEffects.add(this::nextTurnMissEffect);
+            bm.sendAttackerMessageToBoth("Attack Miss.");
+            return;
+        } else if(tenksCheck(bm)) {
+            bm.sendDefenderMessageToBoth("Tough as a Boulder Buff: Cannot be affected by fire and fauna attacks");
+            return;
+        }
+
+        bm.applyDamageStep(dmg, "Roll");
+        if(dmg == baseDmg) bm.applyDamageStep(10, "CRIT!");
+        weaknessCalc(bm);
+        if(effects != null) effects.forEach(effect -> effect.accept(bm));
+    }
+
+    @Override
+    public String toString() {
+        return name + "(" + type + "): " + baseDmg + "atk, " + description;
+    }
+
+    public static class Builder {
+        private String name = "";
+        private String description = "";
+        private Type type = Type.NO_TYPE;
+        private int baseDmg = 0;
+        private ArrayList<ICardAction> effects = null;
+
+        public Builder name(String name) {
+            this.name = name;
+            return this;
+        }
+
+        public Builder description(String description) {
+            this.description = description;
+            return this;
+        }
+
+        public Builder type(Type type) {
+            this.type = type;
+            return this;
+        }
+
+        public Builder baseDmg(int baseDmg) {
+            this.baseDmg = baseDmg;
+            return this;
+        }
+
+        public Builder withEffect(ICardAction effect) {
+            this.effects.add(effect);
+            return this;
+        }
     }
 }

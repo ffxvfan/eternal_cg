@@ -1,7 +1,7 @@
 package com.gotenks.eternal_cg.init;
 
 import com.gotenks.eternal_cg.EternalCG;
-import com.gotenks.eternal_cg.items.CardID;
+import com.gotenks.eternal_cg.cards.CardID;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemGroup;
 import net.minecraft.item.ItemStack;
@@ -22,6 +22,6 @@ public class ItemsInit {
     };
 
     static {
-        Arrays.stream(CardID.values()).forEach(id -> ITEMS.register(id.name, () -> id.card));
+        Arrays.stream(CardID.values()).forEach(id -> ITEMS.register(id.name(), () -> id.card));
     }
 }
